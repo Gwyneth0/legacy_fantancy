@@ -1,88 +1,124 @@
-import { _decorator, Animation, Component, Event, EventKeyboard, Input, input, KeyCode, macro, Node, SystemEvent, tween, Vec2, Vec3 } from 'cc';
-import { Constants } from '../data/Contants';
+import { _decorator, Animation, Component, EventKeyboard, input, Input, KeyCode, Node, Vec3, tween, SystemEvent, EventMouse, systemEvent } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('Player')
 export class Player extends Component {
 
-    private Animation: Animation | null = null;
+    @property(Animation)
+    private animation: Animation | null = null;
 
-    private mapAnim: Map<KeyCode, string> = new Map();
-
-    private key: KeyCode;
+    private isMovingLeft: boolean = false;
+    private isMovingRight: boolean = false;
+    private moveSpeed: number = 100;
+    private isJumping: boolean = false;
+    private isAttacking: boolean = false;
+    private tempJumb: Vec3;
 
     protected start(): void {
-        input.on(Input.EventType.KEY_DOWN, this.gamePlay, this);
-        input.on(Input.EventType.KEY_PRESSING, this.gamePlay, this);
-       
+        this.playAnimation("idle");
+        input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
+        input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
     }
 
     protected onLoad(): void {
-        this.Animation = this.getComponent(Animation);
+        this.animation = this.getComponent(Animation);
     }
 
-    protected gamePlay(event: EventKeyboard) {
+    protected onKeyDown(event: EventKeyboard) {
         switch (event.keyCode) {
             case KeyCode.KEY_A:
                 this.node.scale = new Vec3(-1, 1, 0);
-                this.Animation.play("run");
-                this.leftStep(1);
+                this.isMovingLeft = true;
+                if (!this.isJumping && !this.isAttacking) { 
+                    this.playAnimation("run");
+                }
                 break;
             case KeyCode.KEY_D:
                 this.node.scale = new Vec3(1, 1, 0);
-                this.Animation.play("run");
-                this.rightStep(1);
+                this.isMovingRight = true;
+                if (!this.isJumping && !this.isAttacking) {
+                    this.playAnimation("run");
+                }
                 break;
             case KeyCode.SPACE:
-                this.Animation.play("attack");
+                if (!this.isAttacking) { 
+                    this.playAnimation("attack");
+                    this.isMovingLeft = false;
+                    this.isMovingRight = false;
+                }
                 break;
-            case KeyCode.KEY_W:
-                this.Animation.play("jumb");
-                break;
+            // case  KeyCode.KEY_W:
+            //     this.playAnimation("jumb");
+            //     this.tempJumb.x = 10;
+            //     this.tempJumb.y = 10;
+            //     this.node.setPosition(this.tempJumb);
         }
     }
 
-    protected rightStep(step: number): void {
-        if (Constants.STARTMOVE) {
-            return;
+    protected onKeyUp(event: EventKeyboard) {
+        switch (event.keyCode) {
+            case KeyCode.KEY_A:
+                this.node.scale = new Vec3(-1, 1, 0);
+                this.isMovingLeft = false;
+                if (!this.isJumping && !this.isAttacking) { 
+                    this.stopAnimation();
+                    this.playAnimation("idle");
+                }
+                break;
+            case KeyCode.KEY_D:
+                this.node.scale = new Vec3(1, 1, 0);
+                this.isMovingRight = false;
+                if (!this.isJumping && !this.isAttacking) { 
+                    this.stopAnimation();
+                    this.playAnimation("idle");
+                }
+                break;
+            case KeyCode.SPACE:
+                if (!this.isAttacking) { 
+                    this.playAnimation("attack");
+                    this.isMovingLeft = false;
+                    this.isMovingRight = false;
+                }
+                break;
         }
-        Constants.STARTMOVE = true;
-        Constants.MOVESTEP = step;
-        Constants.CURMOVETIME = 0;
-        Constants.CURMOVESPEED = Constants.MOVESTEP * Constants.RIGHT_BLOCK_SIZE / Constants.MOVESTEP;
-        this.node.getPosition(Constants.CURPOS);
-        tween(this.node).to(2, { position: Vec3.add(Constants.TARGETPOS, Constants.CURPOS, new Vec3(Constants.MOVESTEP * Constants.RIGHT_BLOCK_SIZE, 0, 0)) })
-        // Vec3.add(Constants.TARGETPOS, Constants.CURPOS, new Vec3(Constants.MOVESTEP * Constants.RIGHT_BLOCK_SIZE, 0, 0));
     }
-
-    protected leftStep(step: number): void {
-        if (Constants.STARTMOVE) {
-            return;
-        }
-        Constants.STARTMOVE = true;
-        Constants.MOVESTEP = step;
-        Constants.CURMOVETIME = 0;
-        Constants.CURMOVESPEED = Constants.MOVESTEP * Constants.LEFT_BLOCK_SIZE / Constants.MOVESTEP;
-        this.node.getPosition(Constants.CURPOS);
-        tween(this.node).to(2, { position: Vec3.add(Constants.TARGETPOS, Constants.CURPOS, new Vec3(Constants.MOVESTEP * Constants.LEFT_BLOCK_SIZE, 0, 0)) })
-        // Vec3.add(Constants.TARGETPOS, Constants.CURPOS, new Vec3(Constants.MOVESTEP * Constants.LEFT_BLOCK_SIZE, 0, 0));
-    }
+    
 
     protected update(deltaTime: number): void {
-        if (Constants.STARTMOVE) {
-            Constants.CURMOVETIME += deltaTime;
-            if (Constants.CURMOVETIME > Constants.MOVETIME) {
-                this.node.setPosition(Constants.TARGETPOS);
-                Constants.STARTMOVE = false;
-            } else {
-                this.node.getPosition(Constants.CURPOS);
-                Constants.DELTAPOS.x = Constants.CURMOVESPEED * deltaTime;
-                Vec3.add(Constants.CURPOS, Constants.CURPOS, Constants.DELTAPOS);
-                this.node.setPosition(Constants.CURPOS);
+        if (this.isJumping || this.isAttacking) {
+            return;
+        }
+
+        if (this.isMovingLeft) {
+            this.node.translate(new Vec3(-this.moveSpeed * deltaTime, 0, 0));
+        }
+        if (this.isMovingRight) {
+            this.node.translate(new Vec3(this.moveSpeed * deltaTime, 0, 0));
+        }
+    }
+
+    protected playAnimation(clipName: string): void {
+        if (this.animation) {
+            const clip = this.animation.clips.find((clip) => clip.name === clipName);
+            if (clip) {
+                this.animation.play(clipName);
+                if (clip.duration) {
+                    this.isAttacking = true;
+                    setInterval(() => {
+                        this.isAttacking = false;
+                    },0.1);
+                } else {
+                    this.isAttacking = false;
+                    this.playAnimation("idle");
+                }
             }
         }
     }
+    
 
-
+    protected stopAnimation(): void {
+        if (this.animation) {
+            this.animation.stop();
+        }
+    }
 }
-
