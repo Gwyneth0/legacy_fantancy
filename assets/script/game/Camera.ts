@@ -1,9 +1,10 @@
-import { _decorator, Component, misc, Node } from 'cc';
+import { _decorator, Component, misc, Node, Prefab } from 'cc';
 import { Player } from './Player';
 const { ccclass, property } = _decorator;
 
 @ccclass('Camera')
 export class Camera extends Component {
+
     @property(Player)
     private Player: Player;
 

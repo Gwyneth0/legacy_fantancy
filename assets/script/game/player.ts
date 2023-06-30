@@ -1,18 +1,17 @@
-import { _decorator, Animation, Component, EventKeyboard, input, Input, KeyCode, Node, Vec3, tween, SystemEvent, EventMouse, systemEvent } from 'cc';
+import { _decorator, Animation, Collider2D, Node, Component, EventKeyboard, input, Input, instantiate, KeyCode, Prefab, Vec3 } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('Player')
 export class Player extends Component {
 
-    @property(Animation)
+    @property(Prefab)
+    private Prefab: Prefab;
     private animation: Animation | null = null;
 
-    private isMovingLeft: boolean = false;
-    private isMovingRight: boolean = false;
+    private isMoving: boolean = false;
     private moveSpeed: number = 100;
-    private isJumping: boolean = false;
-    private isAttacking: boolean = false;
-    private tempJumb: Vec3;
+    private attackPlayer: Node = null;
+    public isAttacking: boolean = false;
 
     protected start(): void {
         this.playAnimation("idle");
@@ -22,103 +21,135 @@ export class Player extends Component {
 
     protected onLoad(): void {
         this.animation = this.getComponent(Animation);
+        this.attackPrefab();
+    }
+
+    protected attackPrefab() {
+        this.attackPlayer = instantiate(this.Prefab);
+        this.attackPlayer.active = false;
+        this.attackPlayer.getComponent(Collider2D).apply();
+        this.attackPlayer.parent = this.node.parent;
     }
 
     protected onKeyDown(event: EventKeyboard) {
         switch (event.keyCode) {
             case KeyCode.KEY_A:
                 this.node.scale = new Vec3(-1, 1, 0);
-                this.isMovingLeft = true;
-                if (!this.isJumping && !this.isAttacking) { 
-                    this.playAnimation("run");
+                if (!this.isAttacking) {
+                    this.moveLeft();
                 }
                 break;
             case KeyCode.KEY_D:
                 this.node.scale = new Vec3(1, 1, 0);
-                this.isMovingRight = true;
-                if (!this.isJumping && !this.isAttacking) {
-                    this.playAnimation("run");
+                if (!this.isAttacking) {
+                    this.moveRight();
                 }
                 break;
             case KeyCode.SPACE:
-                if (!this.isAttacking) { 
-                    this.playAnimation("attack");
-                    this.isMovingLeft = false;
-                    this.isMovingRight = false;
+                if (!this.isMoving) {
+                    this.attack();
+                    if (this.attackPlayer) {
+                        this.attackPlayer.active = true;
+                    }
                 }
                 break;
-            // case  KeyCode.KEY_W:
-            //     this.playAnimation("jumb");
-            //     this.tempJumb.x = 10;
-            //     this.tempJumb.y = 10;
-            //     this.node.setPosition(this.tempJumb);
         }
     }
 
     protected onKeyUp(event: EventKeyboard) {
         switch (event.keyCode) {
             case KeyCode.KEY_A:
-                this.node.scale = new Vec3(-1, 1, 0);
-                this.isMovingLeft = false;
-                if (!this.isJumping && !this.isAttacking) { 
-                    this.stopAnimation();
-                    this.playAnimation("idle");
-                }
+                this.stopMoving();
                 break;
             case KeyCode.KEY_D:
-                this.node.scale = new Vec3(1, 1, 0);
-                this.isMovingRight = false;
-                if (!this.isJumping && !this.isAttacking) { 
-                    this.stopAnimation();
-                    this.playAnimation("idle");
-                }
+                this.stopMoving();
                 break;
             case KeyCode.SPACE:
-                if (!this.isAttacking) { 
-                    this.playAnimation("attack");
-                    this.isMovingLeft = false;
-                    this.isMovingRight = false;
+                this.stopAttack();
+                if (this.attackPlayer) {
+                    this.attackPlayer.active = false;
                 }
                 break;
         }
     }
-    
 
-    protected update(deltaTime: number): void {
-        if (this.isJumping || this.isAttacking) {
-            return;
-        }
+    public takeDamage(): void {
+        console.log('Player die');
+        this.playAnimation("die");
+    }
 
-        if (this.isMovingLeft) {
-            this.node.translate(new Vec3(-this.moveSpeed * deltaTime, 0, 0));
-        }
-        if (this.isMovingRight) {
-            this.node.translate(new Vec3(this.moveSpeed * deltaTime, 0, 0));
+    protected moveLeft(): void {
+        if (!this.isMoving && !this.isAttacking) {
+            this.isMoving = true;
+            this.playAnimation("run");
         }
     }
 
-    protected playAnimation(clipName: string): void {
+    protected moveRight(): void {
+        if (!this.isMoving && !this.isAttacking) {
+            this.isMoving = true;
+            this.playAnimation("run");
+        }
+    }
+
+    protected stopMoving(): void {
+        if (this.isMoving && !this.isAttacking) {
+            this.isMoving = false;
+            this.stopAnimation();
+            this.playAnimation("idle");
+        }
+    }
+
+    protected attack(): void {
+        if (!this.isAttacking) {
+            this.isAttacking = true;
+            this.stopMoving();
+            this.playAttackAnimation();
+            setTimeout(() => {
+                this.stopAttack();
+            }, 5000);
+        }
+    }
+
+    protected stopAttack(): void {
+        if (this.isAttacking) {
+            this.isAttacking = false;
+            this.stopAnimation();
+            this.playAnimation("idle");
+        }
+    }
+
+    public playAttackAnimation(): void {
         if (this.animation) {
-            const clip = this.animation.clips.find((clip) => clip.name === clipName);
+            const clip = this.animation.clips.find((clip) => clip.name === "attack");
             if (clip) {
-                this.animation.play(clipName);
-                if (clip.duration) {
-                    this.isAttacking = true;
-                    setInterval(() => {
-                        this.isAttacking = false;
-                    },0.1);
-                } else {
-                    this.isAttacking = false;
-                    this.playAnimation("idle");
-                }
+                this.animation.play("attack");
             }
         }
     }
-    
 
     protected stopAnimation(): void {
         if (this.animation) {
             this.animation.stop();
+        }
+    }
+
+    protected update(deltaTime: number): void {
+        if (this.isMoving) {
+            const direction = this.node.scale.x > 0 ? 1 : -1;
+            this.node.translate(new Vec3(this.moveSpeed * direction * deltaTime, 0, 0));
+        }
+        if (this.attackPlayer) {
+            this.attackPlayer.setPosition(this.node.getPosition());
+        }
+    }
+
+    public playAnimation(clipName: string): void {
+        if (this.animation) {
+            const clip = this.animation.clips.find((clip) => clip.name === clipName);
+            if (clip) {
+                this.animation.play(clipName);
+            }
         }
     }
 }
