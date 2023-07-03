@@ -4,13 +4,13 @@ const { ccclass, property } = _decorator;
 @ccclass('Player')
 export class Player extends Component {
 
-    @property(Prefab)
-    private Prefab: Prefab;
+    @property(Node)
+    public Fire: Node = null;
     private animation: Animation | null = null;
 
     private isMoving: boolean = false;
     private moveSpeed: number = 100;
-    private attackPlayer: Node = null;
+    // private attackPlayer: Node = null;
     public isAttacking: boolean = false;
 
     protected start(): void {
@@ -21,14 +21,6 @@ export class Player extends Component {
 
     protected onLoad(): void {
         this.animation = this.getComponent(Animation);
-        this.attackPrefab();
-    }
-
-    protected attackPrefab() {
-        this.attackPlayer = instantiate(this.Prefab);
-        this.attackPlayer.active = false;
-        this.attackPlayer.getComponent(Collider2D).apply();
-        this.attackPlayer.parent = this.node.parent;
     }
 
     protected onKeyDown(event: EventKeyboard) {
@@ -48,8 +40,8 @@ export class Player extends Component {
             case KeyCode.SPACE:
                 if (!this.isMoving) {
                     this.attack();
-                    if (this.attackPlayer) {
-                        this.attackPlayer.active = true;
+                    if (this.Fire) {
+                        this.Fire.active = true;
                     }
                 }
                 break;
@@ -66,8 +58,8 @@ export class Player extends Component {
                 break;
             case KeyCode.SPACE:
                 this.stopAttack();
-                if (this.attackPlayer) {
-                    this.attackPlayer.active = false;
+                if (this.Fire) {
+                    this.Fire.active = false;
                 }
                 break;
         }
@@ -139,8 +131,8 @@ export class Player extends Component {
             const direction = this.node.scale.x > 0 ? 1 : -1;
             this.node.translate(new Vec3(this.moveSpeed * direction * deltaTime, 0, 0));
         }
-        if (this.attackPlayer) {
-            this.attackPlayer.setPosition(this.node.getPosition());
+        if (this.Fire) {
+            this.Fire.setPosition(this.node.getPosition());
         }
     }
 

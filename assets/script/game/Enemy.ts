@@ -1,4 +1,4 @@
-import { _decorator, Component, Vec3, Animation, Collider2D, IPhysics2DContact, Contact2DType } from 'cc';
+import { _decorator, Component, Vec3, Animation, Collider2D, IPhysics2DContact, Contact2DType, Prefab,Node, instantiate } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('Enemy')
@@ -8,25 +8,6 @@ export class Enemy extends Component {
     private boundsSize: number = 20;
     private transition: number = 0;
     private direction: number = 1;
-    private animation: Animation | null = null;
-
-    protected start(): void {
-        this.animation = this.getComponent(Animation);
-    }
-
-    public playAnimation(clipName: string): void {
-        if (this.animation) {
-            const clip = this.animation.clips.find((clip) => clip.name === clipName);
-            if (clip) {
-                this.animation.play(clipName);
-            }
-        }
-    }
-
-    public takeDamage(): void {
-        this.node.destroy();
-        console.log('Enemy die');
-    }
 
     protected update(deltaTime: number): void {
         this.transition += deltaTime * this.moveSpeed * this.direction;

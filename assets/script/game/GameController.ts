@@ -1,5 +1,6 @@
-import { _decorator, Collider2D, Component, Contact2DType, IPhysics2DContact } from 'cc';
+import { _decorator, Collider2D, Component, Contact2DType, IPhysics2DContact, Node, Prefab } from 'cc';
 import { Player } from './Player';
+import { EnemyController } from './EnemyController';
 import { Enemy } from './Enemy';
 const { ccclass, property } = _decorator;
 
@@ -8,9 +9,12 @@ export class GameController extends Component {
 
     @property(Player)
     private player: Player;
+    
+    
+    @property(EnemyController)
+    private EnemyCtrl: EnemyController;
 
-    @property(Enemy)
-    private enemy: Enemy;
+    private hitCount : number = 0;
 
     private enemyHitCount: number = 0;
     private isPlayerAttacking: boolean = false;
@@ -28,38 +32,32 @@ export class GameController extends Component {
         if (playerCollider) {
             playerCollider.on(Contact2DType.BEGIN_CONTACT, this.onPlayerContact, this);
         }
-        const enemyCollider = this.enemy.getComponent(Collider2D);
-        if (enemyCollider) {
-            enemyCollider.on(Contact2DType.BEGIN_CONTACT, this.onEnemyContact, this);
+        const FireCollider = this.player.Fire.getComponent(Collider2D);
+        if(FireCollider){
+            FireCollider.on(Contact2DType.BEGIN_CONTACT, this.onFireContact, this);
         }
     }
 
     protected onPlayerContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null): void {
-        if (!this.isPlayerAttacking) {
-            this.playerTakeDamage();
+        this.hitCount ++;
+        if(otherCollider.tag === 1){
+            if(this.hitCount ===3){
+                console.log("Enemy Die");
+                this.EnemyCtrl.node.destroy();
+            }
         }
+        console.log("player dame");
+       this.player.takeDamage();
     }
 
-    protected onEnemyContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null): void {
-        if (this.isPlayerAttacking) {
-            this.enemyTakeDamage();
+    protected onFireContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null): void {
+       this.hitCount ++;
+        if(otherCollider.tag === 1){
+            console.log("Fire dame");
+            if(this.hitCount ===3){
+                console.log("Enemy Die");
+                this.EnemyCtrl.node.destroy();
+            }
         }
     }
-    protected playerAttack(): void {
-        if (!this.isPlayerAttacking) {
-            this.isPlayerAttacking = true;
-            this.enemyTakeDamage();
-            console.log('Player is attacking the enemy');
-        }
-    }
-    
-    protected playerTakeDamage(): void {
-        this.player.takeDamage();
-    }
-
-    protected enemyTakeDamage(): void {
-        this.enemy.takeDamage();
-        console.log('Enemy takes damage');
-    }
-    
 }
