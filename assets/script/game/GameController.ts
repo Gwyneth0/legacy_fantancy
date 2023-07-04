@@ -1,7 +1,8 @@
-import { _decorator, Collider2D, Component, Contact2DType, IPhysics2DContact, Node, Prefab } from 'cc';
+import { _decorator, Collider2D, Component, Animation, Contact2DType, IPhysics2DContact, Node, Prefab } from 'cc';
 import { Player } from './Player';
 import { EnemyController } from './EnemyController';
 import { Enemy } from './Enemy';
+
 const { ccclass, property } = _decorator;
 
 @ccclass('GameController')
@@ -11,16 +12,17 @@ export class GameController extends Component {
     private player: Player;
 
     @property(EnemyController)
-    private EnemyCtrl: EnemyController;
+    private enemyCtrl: EnemyController;
 
+    private isOnGround: boolean = false;
     private hitCount: number = 0;
+    private hitPlayer: number = 0;
 
     protected onLoad(): void {
         this.contactEnemy();
     }
 
     protected update(dt: number): void {
-        console.log(this.hitCount)
     }
 
     protected contactEnemy(): void {
@@ -37,29 +39,32 @@ export class GameController extends Component {
     }
 
     protected onPlayerContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null): void {
-        this.hitCount++;
+        if (otherCollider.tag ===2) {
+            this.hitPlayer++;
+            this.player.playerLight();
+            if (this.hitPlayer === 3) {
+                this.hitPlayer = 0;
+                console.log("Player Die");
+            }
+            this.scheduleOnce(()=>{
+                this.player.getComponent(Animation).play("idle");
+            },0.5)
+        }
+            if(this.player.isMoving){
+                this.player.getComponent(Animation).play("run");
+            }
+    }
+
+
+    protected onFireContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null): void {
         if (otherCollider.tag === 1) {
+            this.hitCount++;
+            console.log("Fire damage");
             if (this.hitCount === 3) {
                 this.hitCount = 0;
                 console.log("Enemy Die");
                 otherCollider.node.active = false;
             }
         }
-        console.log("player dame");
-        this.player.takeDamage();
-    }
-
-    protected onFireContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null): void {
-        this.scheduleOnce(function(){
-            this.hitCount++;
-            if (otherCollider.tag === 1) {
-                console.log("Fire dame");
-                if (this.hitCount === 3) {
-                    this.hitCount = 0;
-                    console.log("Enemy Die");
-                    otherCollider.node.active = false;
-                }
-            }
-        })
     }
 }

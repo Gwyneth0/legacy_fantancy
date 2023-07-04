@@ -1,4 +1,4 @@
-import { _decorator, Animation, Collider2D, Node, Component, EventKeyboard, input, Input, KeyCode, Vec3, tween } from 'cc';
+import { _decorator, Animation, Collider2D, Node, Component, EventKeyboard, input, Input, KeyCode, Vec3, tween, RigidBody2D, Vec2 } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('Player')
@@ -9,12 +9,12 @@ export class Player extends Component {
 
     private animation: Animation | null = null;
 
-    private isMoving: boolean = false;
+    public isMoving: boolean = false;
     private moveSpeed: number = 100;
     public isAttacking: boolean = false;
     private canJump: boolean = true;
     private isJumping: boolean = false;
-    private jumpSpeed: number = 200;
+    private jumpSpeed: number = 300;
     private jumpDuration: number = 0.5;
     private initialY: number = 0;
     private canInput: boolean = true;
@@ -37,19 +37,30 @@ export class Player extends Component {
 
         switch (event.keyCode) {
             case KeyCode.KEY_A:
-                this.node.scale = new Vec3(-1, 1, 0);
                 if (!this.isAttacking) {
                     this.moveLeft();
                 }
+                this.node.scale = new Vec3(-1, 1, 0);
+                this.isMoving = true;
                 break;
             case KeyCode.KEY_D:
-                this.node.scale = new Vec3(1, 1, 0);
                 if (!this.isAttacking) {
                     this.moveRight();
                 }
+                this.node.scale = new Vec3(1, 1, 0);
+                this.isMoving = true;
                 break;
             case KeyCode.KEY_W:
-                this.jump();
+                if (this.node.position.y <= -180) {
+                    this.node.getComponent(RigidBody2D).linearVelocity = new Vec2(0, 20)
+                    this.getComponent(Animation).play("jumb");
+                    setTimeout(() => {
+                        this.node.getComponent(Animation).play("idle");
+                    }, 1000);
+                }
+                // if(this.isMoving === true){
+                //     this.node.getComponent(Animation).play("run");
+                // }
                 break;
             case KeyCode.SPACE:
                 this.attack();
@@ -70,28 +81,31 @@ export class Player extends Component {
                 this.stopMoving();
                 break;
             case KeyCode.KEY_W:
-                // Không cần xử lý gì khi phím W được nhả ra
+                // this.node.getComponent(Animation).play("run");
                 break;
             case KeyCode.SPACE:
                 this.stopAttack();
                 if (this.Fire) {
                     this.Fire.active = false;
                     this.stopMoving();
-                    this.canMove = true; 
+                    this.canMove = true;
                 }
                 break;
         }
     }
-
     public takeDamage(): void {
         console.log('Player die');
         this.getComponent(Animation).play("idle");
     }
 
+    public playerLight() {
+        this.node.getComponent(Animation).play("playerlight");
+    }
+
     protected moveLeft(): void {
         if (!this.isMoving && !this.isAttacking) {
             this.isMoving = true;
-            this.getComponent(Animation).play("run");
+            this.node.getComponent(Animation).play("run");
         }
     }
 
@@ -134,8 +148,8 @@ export class Player extends Component {
             this.animation.stop();
         }
     }
-protected update(deltaTime: number): void {
-        if (this.isMoving) { 
+    protected update(deltaTime: number): void {
+        if (this.isMoving ===  true) {
             const direction = this.node.scale.x > 0 ? 1 : -1;
             this.node.translate(new Vec3(this.moveSpeed * direction * deltaTime, 0, 0));
         }
@@ -144,28 +158,4 @@ protected update(deltaTime: number): void {
         }
     }
 
-    protected jump(): void {
-        if (!this.isAttacking && this.canJump && this.canInput) {
-            this.isJumping = true;
-            this.canJump = false;
-            this.canInput = false;
-            this.stopMoving();
-            this.getComponent(Animation).play("jumb");
-            this.initialY = this.node.position.y;
-            const jumpAction = tween(this.node)
-                .by(this.jumpDuration, { position: new Vec3(0, this.jumpSpeed, 0) })
-                .call(() => {
-                    this.isJumping = false;
-                    tween(this.node)
-                        .to(0.3, { position: new Vec3(this.node.position.x, this.initialY, 0) })
-                        .call(() => {
-                            this.canJump = true;
-                            this.canInput = true;
-                            this.getComponent(Animation).play("idle");
-                        })
-                        .start();
-                })
-                .start();
-        }
-    }
 }
