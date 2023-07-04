@@ -17,6 +17,8 @@ export class Player extends Component {
     private jumpSpeed: number = 200;
     private jumpDuration: number = 0.5;
     private initialY: number = 0;
+    private canInput: boolean = true;
+    private canMove: boolean = true;
 
     protected start(): void {
         this.getComponent(Animation).play("idle");
@@ -29,7 +31,7 @@ export class Player extends Component {
     }
 
     protected onKeyDown(event: EventKeyboard) {
-        if (this.isJumping) {
+        if (!this.canInput) {
             return;
         }
 
@@ -53,6 +55,7 @@ export class Player extends Component {
                 this.attack();
                 if (this.Fire) {
                     this.Fire.active = true;
+                    this.stopMoving();
                 }
                 break;
         }
@@ -73,6 +76,8 @@ export class Player extends Component {
                 this.stopAttack();
                 if (this.Fire) {
                     this.Fire.active = false;
+                    this.stopMoving();
+                    this.canMove = true; 
                 }
                 break;
         }
@@ -106,10 +111,10 @@ export class Player extends Component {
     }
 
     protected attack(): void {
-        if (!this.isAttacking && !this.isJumping) {
+        if (!this.isAttacking) {
             this.isAttacking = true;
             this.stopMoving();
-            this.getComponent(Animation).play("attack");
+            this.getComponent(Animation).play("attack")
             setTimeout(() => {
                 this.stopAttack();
             }, 5000);
@@ -129,9 +134,8 @@ export class Player extends Component {
             this.animation.stop();
         }
     }
-
-    protected update(deltaTime: number): void {
-        if (this.isMoving) {
+protected update(deltaTime: number): void {
+        if (this.isMoving) { 
             const direction = this.node.scale.x > 0 ? 1 : -1;
             this.node.translate(new Vec3(this.moveSpeed * direction * deltaTime, 0, 0));
         }
@@ -141,9 +145,10 @@ export class Player extends Component {
     }
 
     protected jump(): void {
-        if (!this.isAttacking && this.canJump) {
+        if (!this.isAttacking && this.canJump && this.canInput) {
             this.isJumping = true;
             this.canJump = false;
+            this.canInput = false;
             this.stopMoving();
             this.getComponent(Animation).play("jumb");
             this.initialY = this.node.position.y;
@@ -155,6 +160,7 @@ export class Player extends Component {
                         .to(0.3, { position: new Vec3(this.node.position.x, this.initialY, 0) })
                         .call(() => {
                             this.canJump = true;
+                            this.canInput = true;
                             this.getComponent(Animation).play("idle");
                         })
                         .start();
