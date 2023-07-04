@@ -1,4 +1,4 @@
-import { _decorator, Animation, Collider2D, Node, Component, EventKeyboard, input, Input, instantiate, KeyCode, Prefab, Vec3, animation } from 'cc';
+import { _decorator, Animation, Collider2D, Node, Component, EventKeyboard, input, Input, KeyCode, Vec3, tween } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('Player')
@@ -12,6 +12,11 @@ export class Player extends Component {
     private isMoving: boolean = false;
     private moveSpeed: number = 100;
     public isAttacking: boolean = false;
+    private canJump: boolean = true;
+    private isJumping: boolean = false;
+    private jumpSpeed: number = 200;
+    private jumpDuration: number = 0.5;
+    private initialY: number = 0;
 
     protected start(): void {
         this.getComponent(Animation).play("idle");
@@ -24,6 +29,10 @@ export class Player extends Component {
     }
 
     protected onKeyDown(event: EventKeyboard) {
+        if (this.isJumping) {
+            return;
+        }
+
         switch (event.keyCode) {
             case KeyCode.KEY_A:
                 this.node.scale = new Vec3(-1, 1, 0);
@@ -36,6 +45,9 @@ export class Player extends Component {
                 if (!this.isAttacking) {
                     this.moveRight();
                 }
+                break;
+            case KeyCode.KEY_W:
+                this.jump();
                 break;
             case KeyCode.SPACE:
                 this.attack();
@@ -54,6 +66,9 @@ export class Player extends Component {
             case KeyCode.KEY_D:
                 this.stopMoving();
                 break;
+            case KeyCode.KEY_W:
+                // Không cần xử lý gì khi phím W được nhả ra
+                break;
             case KeyCode.SPACE:
                 this.stopAttack();
                 if (this.Fire) {
@@ -62,7 +77,6 @@ export class Player extends Component {
                 break;
         }
     }
-
 
     public takeDamage(): void {
         console.log('Player die');
@@ -87,15 +101,15 @@ export class Player extends Component {
         if (this.isMoving && !this.isAttacking) {
             this.isMoving = false;
             this.stopAnimation();
-            this.getComponent(Animation).play("run");
+            this.getComponent(Animation).play("idle");
         }
     }
 
     protected attack(): void {
-        if (!this.isAttacking) {
+        if (!this.isAttacking && !this.isJumping) {
             this.isAttacking = true;
             this.stopMoving();
-            this.getComponent(Animation).play("attack")
+            this.getComponent(Animation).play("attack");
             setTimeout(() => {
                 this.stopAttack();
             }, 5000);
@@ -126,4 +140,26 @@ export class Player extends Component {
         }
     }
 
+    protected jump(): void {
+        if (!this.isAttacking && this.canJump) {
+            this.isJumping = true;
+            this.canJump = false;
+            this.stopMoving();
+            this.getComponent(Animation).play("jumb");
+            this.initialY = this.node.position.y;
+            const jumpAction = tween(this.node)
+                .by(this.jumpDuration, { position: new Vec3(0, this.jumpSpeed, 0) })
+                .call(() => {
+                    this.isJumping = false;
+                    tween(this.node)
+                        .to(0.3, { position: new Vec3(this.node.position.x, this.initialY, 0) })
+                        .call(() => {
+                            this.canJump = true;
+                            this.getComponent(Animation).play("idle");
+                        })
+                        .start();
+                })
+                .start();
+        }
+    }
 }

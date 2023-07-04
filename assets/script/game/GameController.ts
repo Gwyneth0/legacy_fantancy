@@ -1,4 +1,4 @@
-import { _decorator, cclegacy, Collider2D, Component, Contact2DType, IPhysics2DContact, Node, Prefab } from 'cc';
+import { _decorator, Collider2D, Component, Contact2DType, IPhysics2DContact, Node, Prefab } from 'cc';
 import { Player } from './Player';
 import { EnemyController } from './EnemyController';
 import { Enemy } from './Enemy';
