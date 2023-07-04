@@ -18,16 +18,16 @@
         "__id__": 2
       },
       {
-        "__id__": 71
+        "__id__": 70
       },
       {
-        "__id__": 72
+        "__id__": 71
       }
     ],
     "_active": true,
     "_components": [],
     "_prefab": {
-      "__id__": 73
+      "__id__": 72
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -58,7 +58,7 @@
     },
     "autoReleaseAssets": false,
     "_globals": {
-      "__id__": 74
+      "__id__": 73
     },
     "_id": "79453501-e92c-49fe-bbaf-c99b656fd84e"
   },
@@ -102,9 +102,6 @@
       },
       {
         "__id__": 69
-      },
-      {
-        "__id__": 70
       }
     ],
     "_prefab": null,
@@ -288,8 +285,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -390.118,
-      "y": -218,
+      "x": -403,
+      "y": -224.649,
       "z": 0
     },
     "_lrot": {
@@ -490,7 +487,7 @@
     "enabledContactListener": true,
     "bullet": false,
     "awakeOnLoad": true,
-    "_group": 1,
+    "_group": 8,
     "_type": 2,
     "_allowSleep": true,
     "_gravityScale": 0,
@@ -525,7 +522,7 @@
       "x": 0,
       "y": 0
     },
-    "_radius": 83.9,
+    "_radius": 55,
     "_id": "274Fzuu1ZJBJTNhkmDvkIz"
   },
   {
@@ -666,7 +663,7 @@
     "enabledContactListener": true,
     "bullet": false,
     "awakeOnLoad": true,
-    "_group": 1,
+    "_group": 2,
     "_type": 2,
     "_allowSleep": false,
     "_gravityScale": 0,
@@ -698,8 +695,8 @@
     "_restitution": 0,
     "_offset": {
       "__type__": "cc.Vec2",
-      "x": 4.9,
-      "y": 1
+      "x": 0,
+      "y": 0
     },
     "_radius": 39.6,
     "_id": "f3k/1TsnhKzpkyVqZpNBBp"
@@ -1093,7 +1090,7 @@
         "__id__": 58
       }
     ],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 61
@@ -2410,29 +2407,6 @@
     "_id": "c5V1EV8IpMtrIvY1OE9t2u"
   },
   {
-    "__type__": "cc.Animation",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 2
-    },
-    "_enabled": true,
-    "__prefab": null,
-    "playOnLoad": false,
-    "_clips": [
-      {
-        "__uuid__": "ef298c6e-3dd2-49da-b734-3df5bdd97776",
-        "__expectedType__": "cc.AnimationClip"
-      },
-      {
-        "__uuid__": "5f7ae36c-aa31-4bc6-a84e-7f7f950a3307",
-        "__expectedType__": "cc.AnimationClip"
-      }
-    ],
-    "_defaultClip": null,
-    "_id": "edChtrEwFHGJUSZcqW+BJp"
-  },
-  {
     "__type__": "cc.Node",
     "_name": "@GameView",
     "_objFlags": 0,
@@ -2523,22 +2497,22 @@
   {
     "__type__": "cc.SceneGlobals",
     "ambient": {
-      "__id__": 75
+      "__id__": 74
     },
     "shadows": {
-      "__id__": 76
+      "__id__": 75
     },
     "_skybox": {
-      "__id__": 77
+      "__id__": 76
     },
     "fog": {
-      "__id__": 78
+      "__id__": 77
     },
     "octree": {
-      "__id__": 79
+      "__id__": 78
     },
     "lightProbeInfo": {
-      "__id__": 80
+      "__id__": 79
     },
     "bakedWithStationaryMainLight": false,
     "bakedWithHighpLightmap": false

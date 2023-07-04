@@ -1,4 +1,4 @@
-import { _decorator, Animation, Collider2D, Node, Component, EventKeyboard, input, Input, instantiate, KeyCode, Prefab, Vec3 } from 'cc';
+import { _decorator, Animation, Collider2D, Node, Component, EventKeyboard, input, Input, instantiate, KeyCode, Prefab, Vec3, animation } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('Player')
@@ -6,15 +6,15 @@ export class Player extends Component {
 
     @property(Node)
     public Fire: Node = null;
+
     private animation: Animation | null = null;
 
     private isMoving: boolean = false;
     private moveSpeed: number = 100;
-    // private attackPlayer: Node = null;
     public isAttacking: boolean = false;
 
     protected start(): void {
-        this.playAnimation("idle");
+        this.getComponent(Animation).play("idle");
         input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
         input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
     }
@@ -38,11 +38,9 @@ export class Player extends Component {
                 }
                 break;
             case KeyCode.SPACE:
-                if (!this.isMoving) {
-                    this.attack();
-                    if (this.Fire) {
-                        this.Fire.active = true;
-                    }
+                this.attack();
+                if (this.Fire) {
+                    this.Fire.active = true;
                 }
                 break;
         }
@@ -65,22 +63,23 @@ export class Player extends Component {
         }
     }
 
+
     public takeDamage(): void {
         console.log('Player die');
-        this.playAnimation("die");
+        this.getComponent(Animation).play("idle");
     }
 
     protected moveLeft(): void {
         if (!this.isMoving && !this.isAttacking) {
             this.isMoving = true;
-            this.playAnimation("run");
+            this.getComponent(Animation).play("run");
         }
     }
 
     protected moveRight(): void {
         if (!this.isMoving && !this.isAttacking) {
             this.isMoving = true;
-            this.playAnimation("run");
+            this.getComponent(Animation).play("run");
         }
     }
 
@@ -88,7 +87,7 @@ export class Player extends Component {
         if (this.isMoving && !this.isAttacking) {
             this.isMoving = false;
             this.stopAnimation();
-            this.playAnimation("idle");
+            this.getComponent(Animation).play("run");
         }
     }
 
@@ -96,7 +95,7 @@ export class Player extends Component {
         if (!this.isAttacking) {
             this.isAttacking = true;
             this.stopMoving();
-            this.playAttackAnimation();
+            this.getComponent(Animation).play("attack")
             setTimeout(() => {
                 this.stopAttack();
             }, 5000);
@@ -107,16 +106,7 @@ export class Player extends Component {
         if (this.isAttacking) {
             this.isAttacking = false;
             this.stopAnimation();
-            this.playAnimation("idle");
-        }
-    }
-
-    public playAttackAnimation(): void {
-        if (this.animation) {
-            const clip = this.animation.clips.find((clip) => clip.name === "attack");
-            if (clip) {
-                this.animation.play("attack");
-            }
+            this.getComponent(Animation).play("idle");
         }
     }
 
@@ -136,12 +126,4 @@ export class Player extends Component {
         }
     }
 
-    public playAnimation(clipName: string): void {
-        if (this.animation) {
-            const clip = this.animation.clips.find((clip) => clip.name === clipName);
-            if (clip) {
-                this.animation.play(clipName);
-            }
-        }
-    }
 }

@@ -6,17 +6,24 @@ export class EnemyController extends Component {
      
     @property(Prefab)
     private blackPigPrefab : Prefab;
-    private blackPig: Node = null;
+
+    private blackPig: Node[] = [];
+    private enemyCount: number = 5; 
 
     protected onLoad(): void {
         this.black_Pig_Prefab();
     }
-
+    
     protected black_Pig_Prefab() {
-        this.blackPig = instantiate(this.blackPigPrefab);
-        this.blackPig.active = true;
-        this.blackPig.getComponent(Collider2D).apply();
-        this.blackPig.parent = this.node;
-    }
-}
+        for(let i = 0; i < this.enemyCount; i++){
+            const enemy = instantiate(this.blackPigPrefab);
+            enemy.setPosition(i *500, -217, 0);
+            enemy.parent = this.node;
+            this.blackPig.push(enemy);
 
+            // const randomPosX = Math.random() * this.mapWidth - this.mapWidth / 2;
+            enemy.getComponent(Collider2D).apply();
+        }
+    }
+    
+}
